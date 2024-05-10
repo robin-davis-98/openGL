@@ -2,12 +2,21 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <fstream>
+#include <string>
 
+void mainLoop(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+const char* LoadShaderAsString(const std::string& filename);
+
+void testShader(std::string type, unsigned int& shader);
 
 const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
+
+const char* vertexShaderSource = LoadShaderAsString("./shaders/vertex.glsl");
+const char* fragmentShaderSource = LoadShaderAsString("./shaders/fragment.glsl");
 
 int main()
 {
@@ -36,6 +45,37 @@ int main()
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
+	
+	//VERTEX SHADER
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+
+	testShader("VERTEX", vertexShader);
+
+	//FRAGMENT SHADER
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	testShader("FRAGMENT", fragmentShader);
+
+	//SHADER PROGRAM
+	unsigned int shaderProgram;
+	shaderProgram = glCreateProgram();
+
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	testProgram("PROGRAM", shaderProgram);
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 
 	float vertices[] = {
 		-0.5f, -0.5f, 0.0f,
@@ -50,13 +90,15 @@ int main()
 
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
 
-	// This function takes user specified data and places it within the currently bound buffer.
-	// Parameter 1: takes the kind of buffer we are loading into
-	// Parameter 2: takes the size of the the data we are binding in bytes
-	// Parameter 3: takes the data we want loaded
-	// Parameter 4: specifies how we want the data to be managed by the GPU. GL_STREAM_DRAW, GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	mainLoop(window, shaderProgram);
+
+	return 0;
+}
+
+void mainLoop(GLFWwindow* window, unsigned int& shaderProgram)
+{
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
@@ -64,12 +106,13 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glUseProgram(shaderProgram);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
 	glfwTerminate();
-	return 0;
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -82,5 +125,50 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, true);
+	}
+}
+
+const char* LoadShaderAsString(const std::string& FILENAME)
+{
+	std::string result = "";
+
+	std::string line = "";
+	std::ifstream file(FILENAME.c_str());
+
+	if (file.is_open())
+	{
+		while (std::getline(file, line))
+		{
+			result += line;
+		}
+		file.close();
+	}
+
+	return result.c_str();
+}
+
+void testShader(std::string type, unsigned int& shader)
+{
+	int  success;
+	char infoLog[512];
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+	if (!success)
+	{
+		glGetShaderInfoLog(shader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::" << type << "::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+}
+
+void testProgram(std::string type, unsigned int& program)
+{
+	int  success;
+	char infoLog[512];
+	glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+	if (!success)
+	{
+		glGetProgramInfoLog(program, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::" << type << "::LINKING_FAILED\n" << infoLog << std::endl;
 	}
 }
