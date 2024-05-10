@@ -37,6 +37,26 @@ int main()
 		return -1;
 	}
 
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f,
+		 0.5f, -0.5f, 0.0f,
+		 0.0f,  0.5f, 0.0f
+	};
+
+	// Vertex Buffer Object is a GL_ARRAY_BUFFER
+
+	unsigned int VertexBufferObject, VAO, EBO;
+	glGenBuffers(1, &VertexBufferObject);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
+
+	// This function takes user specified data and places it within the currently bound buffer.
+	// Parameter 1: takes the kind of buffer we are loading into
+	// Parameter 2: takes the size of the the data we are binding in bytes
+	// Parameter 3: takes the data we want loaded
+	// Parameter 4: specifies how we want the data to be managed by the GPU. GL_STREAM_DRAW, GL_STATIC_DRAW or GL_DYNAMIC_DRAW
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
