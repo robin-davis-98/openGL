@@ -1,4 +1,2 @@
 ﻿  main.cpp
-C:\Users\ryda9\Desktop\Projects\OpenGL\openGL\learnOpenGL\learnOpenGL\main.cpp(79,54): warning C4101: 'ElementBufferObject': unreferenced local variable
-C:\Users\ryda9\Desktop\Projects\OpenGL\openGL\learnOpenGL\learnOpenGL\main.cpp(79,35): warning C4101: 'VertexArrayObject': unreferenced local variable
   learnOpenGL.vcxproj -> C:\Users\ryda9\Desktop\Projects\OpenGL\openGL\learnOpenGL\x64\Debug\learnOpenGL.exe
