@@ -3,20 +3,21 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 
-void mainLoop(GLFWwindow* window);
+void mainLoop(GLFWwindow* window, unsigned int& shaderProgram);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mainLoop(GLFWwindow* window, unsigned int& shaderProgram);
 void processInput(GLFWwindow* window);
-const char* LoadShaderAsString(const std::string& filename);
+void LoadShader(unsigned int& shader, const std::string& FILENAME, const std::string& TYPE);
+void LoadShaderProgram(unsigned int& program, unsigned int shaders[]);
 
 void testShader(std::string type, unsigned int& shader);
+void testProgram(std::string type, unsigned int& program);
 
 const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
-
-const char* vertexShaderSource = LoadShaderAsString("./shaders/vertex.glsl");
-const char* fragmentShaderSource = LoadShaderAsString("./shaders/fragment.glsl");
 
 int main()
 {
@@ -45,38 +46,28 @@ int main()
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
-	
+
 	//VERTEX SHADER
 	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	LoadShader(vertexShader, "./shaders/vertex.glsl", "VERTEX");
 
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	testShader("VERTEX", vertexShader);
 
 	//FRAGMENT SHADER
 	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	testShader("FRAGMENT", fragmentShader);
+	LoadShader(fragmentShader, "./shaders/fragment.glsl", "FRAGMENT");
 
 	//SHADER PROGRAM
 	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
 
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
+	unsigned int shaders[2] = { vertexShader, fragmentShader };
 
-	testProgram("PROGRAM", shaderProgram);
+	LoadShaderProgram(shaderProgram, shaders);
 
+	//SHADER CLEANUP
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
+	//VERTEICE DEFINITION
 	float vertices[] = {
 		-0.5f, -0.5f, 0.0f,
 		 0.5f, -0.5f, 0.0f,
@@ -85,12 +76,14 @@ int main()
 
 	// Vertex Buffer Object is a GL_ARRAY_BUFFER
 
-	unsigned int VertexBufferObject, VAO, EBO;
+	unsigned int VertexBufferObject, VertexArrayObject, ElementBufferObject;
 	glGenBuffers(1, &VertexBufferObject);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
-
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
 	mainLoop(window, shaderProgram);
 
@@ -128,23 +121,57 @@ void processInput(GLFWwindow* window)
 	}
 }
 
-const char* LoadShaderAsString(const std::string& FILENAME)
+void LoadShader(unsigned int& shader, const std::string& FILENAME, const std::string& TYPE)
 {
-	std::string result = "";
-
-	std::string line = "";
-	std::ifstream file(FILENAME.c_str());
-
-	if (file.is_open())
+	try 
 	{
-		while (std::getline(file, line))
+		std::string shaderCode = "";
+
+		std::ifstream shaderFile(FILENAME.c_str());
+
+		std::stringstream shaderStream;
+
+		shaderStream << shaderFile.rdbuf();
+
+		shaderFile.close();
+
+		shaderCode = shaderStream.str();
+
+		const char* shaderSource = shaderCode.c_str();
+
+		if (TYPE == "VERTEX")
 		{
-			result += line;
+			shader = glCreateShader(GL_VERTEX_SHADER);
 		}
-		file.close();
+
+		if (TYPE == "FRAGMENT")
+		{
+			shader = glCreateShader(GL_FRAGMENT_SHADER);
+		}
+
+		glShaderSource(shader, 1, &shaderSource, NULL);
+		glCompileShader(shader);
+
+		testShader(TYPE, shader);
+	}
+	catch (std::exception e)
+	{
+		std::cout << "ERROR::SHADER::" << TYPE << " - Failed to read file" << std::endl;
+	}
+}
+
+void LoadShaderProgram(unsigned int &program, unsigned int shaders[])
+{
+	program = glCreateProgram();
+
+	for (int i = 0; i < sizeof(shaders); i++)
+	{
+		glAttachShader(program, shaders[i]);
 	}
 
-	return result.c_str();
+	glLinkProgram(program);
+
+	testProgram("PROGRAM", program);
 }
 
 void testShader(std::string type, unsigned int& shader)
