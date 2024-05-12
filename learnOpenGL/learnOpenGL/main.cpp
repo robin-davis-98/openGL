@@ -100,7 +100,6 @@ int main()
 
 	glBindVertexArray(0);
 
-
 	std::cout << "Initialization complete" << std::endl;
 
 	mainLoop(window, shaderProgram, VertexArrayObject, ElementBufferObject);
@@ -113,7 +112,7 @@ int main()
 void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& vertexArrayObject, unsigned int& elementBufferObject)
 {
 	//Uncomment this to draw in wireframe mode.
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	while (!glfwWindowShouldClose(window))
 	{
