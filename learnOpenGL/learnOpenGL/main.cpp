@@ -8,7 +8,7 @@
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& vertexArrayObject);
+void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& vertexArrayObject, unsigned int& elementBufferObject);
 void cleanUp(unsigned int& VertexArrayObject, unsigned int& VertexBufferObject, unsigned int& shaderProgram);
 void processInput(GLFWwindow* window);
 void LoadShader(unsigned int &shader, const std::string& FILENAME, const std::string& TYPE);
@@ -19,20 +19,6 @@ void testProgram(std::string type, unsigned int& program);
 
 const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
-
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-"}\0";
-
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-"}\n\0";
 
 int main()
 {
@@ -64,47 +50,17 @@ int main()
 
 	//VERTEX SHADER
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	int  success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::" << "VERTEX" << "::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
+	std::string vertexShaderFile = "./shaders/vertex.glsl";
+	LoadShader(vertexShader, vertexShaderFile, "VERTEX");
 
 	//FRAGMENT SHADER
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-
-	if (!success)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::" << "FRAGMENT" << "::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
+	std::string fragmentShaderFile = "./shaders/fragment.glsl";
+	LoadShader(fragmentShader, fragmentShaderFile, "FRAGMENT");
 
 	//SHADER PROGRAM
 	unsigned int shaderProgram = glCreateProgram();
-
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-
-	glLinkProgram(shaderProgram);
-
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-
-	if (!success)
-	{
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::" << "PROGRAM" << "::LINKING_FAILED\n" << infoLog << std::endl;
-	}
+	LoadShaderProgram(shaderProgram, vertexShader, fragmentShader);
 
 	//SHADER CLEANUP
 	glDeleteShader(vertexShader);
@@ -112,20 +68,30 @@ int main()
 
 	//VERTEX DEFINITION
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		 0.0f,  0.5f, 0.0f
+		0.5f,  0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+	   -0.5f, -0.5f, 0.0f,
+	   -0.5f,  0.5f, 0.0f
 	};
-	// Vertex Buffer Object is a GL_ARRAY_BUFFER
 
-	unsigned int VertexBufferObject, VertexArrayObject;
+	//INDEX DEFINITION
+	unsigned int indices[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	unsigned int VertexBufferObject, VertexArrayObject, ElementBufferObject;
 	glGenVertexArrays(1, &VertexArrayObject);
 	glGenBuffers(1, &VertexBufferObject);
+	glGenBuffers(1, &ElementBufferObject);
 
 	glBindVertexArray(VertexArrayObject);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ElementBufferObject);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -137,29 +103,17 @@ int main()
 
 	std::cout << "Initialization complete" << std::endl;
 
-	while (!glfwWindowShouldClose(window))
-	{
-		processInput(window);
-
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		glUseProgram(shaderProgram);
-		glBindVertexArray(VertexArrayObject);
-
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
+	mainLoop(window, shaderProgram, VertexArrayObject, ElementBufferObject);
 
 	cleanUp(VertexBufferObject, VertexArrayObject, shaderProgram);
 
 	return 0;
 }
 
-void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& vertexArrayObject)
+void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& vertexArrayObject, unsigned int& elementBufferObject)
 {
+	//Uncomment this to draw in wireframe mode.
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -171,7 +125,10 @@ void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& ver
 		glUseProgram(shaderProgram);
 		glBindVertexArray(vertexArrayObject);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
