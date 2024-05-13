@@ -112,7 +112,7 @@ int main()
 void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& vertexArrayObject, unsigned int& elementBufferObject)
 {
 	//Uncomment this to draw in wireframe mode.
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -122,6 +122,12 @@ void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& ver
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shaderProgram);
+
+		float timeValue = glfwGetTime();
+		float greenValue = sin(timeValue) / 2.0f + 0.5f;
+		int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColour");
+		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
 		glBindVertexArray(vertexArrayObject);
 
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
