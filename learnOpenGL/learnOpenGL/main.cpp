@@ -131,6 +131,9 @@ void mainLoop(GLFWwindow* window, unsigned int& shaderProgram, unsigned int& ver
 		int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColour");
 		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 
+		int vertexOffset = glGetUniformLocation(shaderProgram, "vertexOffset");
+		glUniform1f(vertexOffset, 0.5f);
+
 		glBindVertexArray(vertexArrayObject);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 
