@@ -1,0 +1,13 @@
+build/
+bin/
+
+.vscode/
+*.sln
+*.vcxproj*
+
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+/docs/output
