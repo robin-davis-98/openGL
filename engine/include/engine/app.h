@@ -10,6 +10,7 @@ struct ENGINE_API App
     std::string title;
 };
 
-ENGINE_API bool App_Initialize(App& app);
-ENGINE_API void App_Update(App& app);
-ENGINE_API void App_Shutdown(App& app);
+ENGINE_API bool app_Initialize(App& app);
+ENGINE_API bool app_ShouldClose(App& app);
+ENGINE_API void app_Update(App& app);
+ENGINE_API void app_Shutdown(App& app);

@@ -1,12 +1,15 @@
-# buildRuntime.ps1
 $projectRoot = Resolve-Path "$PSScriptRoot/.."
-$buildDir = "$projectRoot/build"
-$toolchain = "-DCMAKE_TOOLCHAIN_FILE=`"$projectRoot/cmake/clang-mingw-toolchain.cmake`""
+$buildDir = "$projectRoot/build/debug"
 
-# Configure (only if build dir missing)
-if (-Not (Test-Path $buildDir)) {
-    cmake -S "$projectRoot" -B $buildDir -DCMAKE_BUILD_TYPE=Release $toolchain
+# Ensure build folder exists
+if (!(Test-Path $buildDir)) {
+    New-Item -ItemType Directory -Path $buildDir | Out-Null
 }
 
-# Build only the runtime target
-cmake --build "$buildDir" --config Release --target modelViewer
+$toolchain = "-DCMAKE_TOOLCHAIN_FILE=`"$projectRoot/cmake/clang-mingw-toolchain.cmake`""
+
+# Configure project if not already configured
+cmake -S "$projectRoot/runtime" -B $buildDir -DCMAKE_BUILD_TYPE=Debug $toolchain
+
+# Build only runtime
+cmake --build "$buildDir" --target modelViewer --config Debug

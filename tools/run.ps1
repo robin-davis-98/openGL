@@ -1,11 +1,8 @@
-# run.ps1
 $projectRoot = Resolve-Path "$PSScriptRoot/.."
-$exePath = "$projectRoot/build/bin/modelViewer.exe"
+$exePath = "$projectRoot/build/debug/bin/modelViewer.exe"
 
-if (-Not (Test-Path $exePath)) {
-    Write-Host "Executable not found. Building runtime first..."
-    & "$projectRoot/scripts/buildRuntime.ps1"
+if (Test-Path $exePath) {
+    & $exePath
+} else {
+    Write-Host "Executable not found. Please run buildAll or buildRuntime first."
 }
-
-Write-Host "Running runtime..."
-& $exePath

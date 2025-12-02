@@ -9,10 +9,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 find_package(Doxygen REQUIRED)
 
-add_subdirectory(lib)
-add_subdirectory(engine)
-add_subdirectory(runtime)
-
 if(DOXYGEN_FOUND)
     set(DOXYGEN_IN ${CMAKE_SOURCE_DIR}/docs/Doxyfile)
     set(DOXYGEN_OUT ${CMAKE_BINARY_DIR}/docs)
@@ -24,3 +20,15 @@ if(DOXYGEN_FOUND)
         VERBATIM
     )
 endif()
+
+option(USE_TRACY "Enable Tracy profiler" ON)
+
+if(USE_TRACY AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_subdirectory(${CMAKE_SOURCE_DIR}/lib/tracy)
+    add_compile_definitions(TRACY_ENABLE)
+endif()
+
+add_subdirectory(lib)
+add_subdirectory(engine)
+add_subdirectory(runtime)
+

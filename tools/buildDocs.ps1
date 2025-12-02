@@ -1,13 +1,13 @@
-# Resolve project root and build directory
+# Resolve project root and build directory (use Release for docs)
 $projectRoot = Resolve-Path "$PSScriptRoot/.."
-$buildDir = "$projectRoot/build"
+$buildDir = "$projectRoot/build/docs"
 
 # Ensure build directory exists
 if (-Not (Test-Path $buildDir)) {
     Write-Host "Build directory not found. Creating and configuring..."
     New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
 
-    # Configure CMake
+    # Configure CMake (we don't need to build engine/runtime, just generate targets)
     cmake -S $projectRoot -B $buildDir -DCMAKE_BUILD_TYPE=Release
 }
 
