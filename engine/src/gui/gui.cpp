@@ -1,0 +1,130 @@
+#include "gui.h"
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <imgui_internal.h>
+
+static bool dockspace_initialized = false;
+static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+void gui_Initialize(Window& window)
+{
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    ImGui_ImplGlfw_InitForOpenGL(window.nativeHandle, true);
+    ImGui_ImplOpenGL3_Init("#version 430");
+}
+
+void gui_RenderViewport(RenderTarget& render_target)
+{
+    ImGui::Begin("Viewport");
+
+    ImVec2 size = ImGui::GetContentRegionAvail();
+
+    // Resize FBO if needed
+    if (size.x > 0 && size.y > 0)
+    {
+        if ((int)size.x != render_target.width ||
+            (int)size.y != render_target.height)
+        {
+            render_target_Resize(render_target, (int)size.x, (int)size.y);
+
+            // Clear new framebuffer to avoid garbage
+            glBindFramebuffer(GL_FRAMEBUFFER, render_target.fbo);
+            glViewport(0, 0, render_target.width, render_target.height);
+            glClearColor(0, 0, 0, 1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+    }
+
+    // ALWAYS draw the viewport image
+    ImGui::Image(
+        (void*)(intptr_t)render_target.colourTexture,
+        size,
+        ImVec2(0, 1),
+        ImVec2(1, 0)
+    );
+
+    ImGui::End();
+}
+
+void gui_NewFrame()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // Dockspace window -----------------------------------------------------
+    ImGuiWindowFlags window_flags =
+        ImGuiWindowFlags_NoDocking |
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoNavFocus;
+
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::Begin("Dockspace Window", nullptr, window_flags);
+    ImGui::PopStyleVar(2);
+
+    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0, 0), dockspace_flags);
+    ImGui::End();
+
+    // Create windows --------------------------------------------------------
+    ImGui::Begin("Scene Hierarchy");
+    ImGui::Text("Scene");
+    ImGui::End();
+
+    ImGui::Begin("Runtime Statistics");
+    ImGui::Text("Runtime");
+    ImGui::End();
+
+    // Build layout ONCE after windows exist --------------------------------
+    if (!dockspace_initialized)
+    {
+        ImGui::DockBuilderRemoveNode(dockspace_id);
+        ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
+        ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->WorkSize);
+
+        ImGuiID left, right;
+        ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.25f, &left, &right);
+
+        ImGuiID left_top, left_bottom;
+        ImGui::DockBuilderSplitNode(left, ImGuiDir_Up, 0.5f, &left_top, &left_bottom);
+
+        ImGui::DockBuilderDockWindow("Scene Hierarchy", left_top);
+        ImGui::DockBuilderDockWindow("Runtime Statistics", left_bottom);
+        ImGui::DockBuilderDockWindow("Viewport", right);
+
+        ImGui::DockBuilderFinish(dockspace_id);
+
+        dockspace_initialized = true;
+    }
+}
+
+void gui_Render()
+{
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void gui_Shutdown()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}

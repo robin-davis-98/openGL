@@ -2,10 +2,17 @@
 
 int main()
 {
-    App app{800, 600, "Hello World"};
+    App app = app_Create(800, 600, "Hello, World!");
 
-    if(!App_Initialize(app))
+    if(!app_Initialize(app))
     {
         return -1;
     }
+
+    while(!app_ShouldClose(app))
+    {
+        app_Update(app);
+    }
+
+    app_Shutdown(app);
 }

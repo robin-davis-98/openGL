@@ -3,6 +3,9 @@ project(engine)
 add_library(${PROJECT_NAME}
     SHARED
         src/app.cpp
+        src/window/window.cpp
+        src/gui/gui.cpp
+        src/renderTarget.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}
@@ -13,6 +16,8 @@ target_compile_definitions(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
         PUBLIC
             include
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/gui
             ${CMAKE_SOURCE_DIR}/lib/glad/include
             ${CMAKE_SOURCE_DIR}/lib/imgui
             ${CMAKE_SOURCE_DIR}/lib/imgui/backends
