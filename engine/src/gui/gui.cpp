@@ -31,14 +31,11 @@ void gui_RenderViewport(RenderTarget& render_target)
         if ((int)size.x != render_target.width ||
             (int)size.y != render_target.height)
         {
-            render_target_Resize(render_target, (int)size.x, (int)size.y);
-
-            // Clear new framebuffer to avoid garbage
-            glBindFramebuffer(GL_FRAMEBUFFER, render_target.fbo);
-            glViewport(0, 0, render_target.width, render_target.height);
-            glClearColor(0, 0, 0, 1);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            render_target_Resize(
+                render_target,
+                (int)size.x,
+                (int)size.y
+            );
         }
     }
 
@@ -104,7 +101,7 @@ void gui_NewFrame()
         ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.25f, &left, &right);
 
         ImGuiID left_top, left_bottom;
-        ImGui::DockBuilderSplitNode(left, ImGuiDir_Up, 0.5f, &left_top, &left_bottom);
+        ImGui::DockBuilderSplitNode(left, ImGuiDir_Up, 0.8f, &left_top, &left_bottom);
 
         ImGui::DockBuilderDockWindow("Scene Hierarchy", left_top);
         ImGui::DockBuilderDockWindow("Runtime Statistics", left_bottom);

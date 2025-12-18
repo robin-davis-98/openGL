@@ -6,6 +6,7 @@ add_library(${PROJECT_NAME}
         src/window/window.cpp
         src/gui/gui.cpp
         src/renderTarget.cpp
+        src/renderer.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}

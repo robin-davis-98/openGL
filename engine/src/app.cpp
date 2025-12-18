@@ -1,4 +1,5 @@
 #include "engine/app.h"
+#include "engine/renderer.h"
 #include "gui.h"
 #include <iostream>
 
@@ -22,6 +23,7 @@ bool app_Initialize(App& app)
         return false;
     }
 
+    glfwSetWindowUserPointer(app.window.nativeHandle, &app);
     gui_Initialize(app.window);
 
     app.viewportRenderTarget = render_target_Create(app.width, app.height);
@@ -41,18 +43,12 @@ void app_FixedUpdate(App& app)
 
 void app_Update(App& app)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, app.viewportRenderTarget.fbo);
-    glViewport(0, 0, app.viewportRenderTarget.width, app.viewportRenderTarget.height);
-
-    glClearColor(
-        app.window.clearColour.rgba.r,
-        app.window.clearColour.rgba.g,
-        app.window.clearColour.rgba.b,
-        app.window.clearColour.rgba.a
-    );
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderer_RenderViewport(app);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, app.width, app.height);
+
+    window_Clear(app.window);
 
     gui_NewFrame();
     gui_RenderViewport(app.viewportRenderTarget);

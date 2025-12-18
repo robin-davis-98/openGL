@@ -60,7 +60,7 @@ void render_target_Destroy(RenderTarget& render_target)
 
     if (render_target.fbo)
     {
-        glDeleteTextures(1, &render_target.fbo);
+        glDeleteFramebuffers(1, &render_target.fbo);
     }
 
     render_target = {};

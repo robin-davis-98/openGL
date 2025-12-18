@@ -1,8 +1,17 @@
 #include "engine/window.h"
+#include "engine/app.h"
+#include "engine/renderTarget.h"
 #include <iostream>
 
 static void framebuffer_size_callback(GLFWwindow* handle, int width, int height)
 {
+    App* app = static_cast<App*>(glfwGetWindowUserPointer(handle));
+    if (!app) return;
+
+    app->width  = width;
+    app->height = height;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, width, height);
 }
 
@@ -43,9 +52,7 @@ bool window_Initialize(Window& window)
 
     glfwSwapInterval(1);
     glfwSetFramebufferSizeCallback(window.nativeHandle, framebuffer_size_callback);
-
-
-
+    
     return true;
 }
 
