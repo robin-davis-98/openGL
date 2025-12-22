@@ -28,6 +28,8 @@ bool app_Initialize(App& app)
 
     app.viewportRenderTarget = render_target_Create(app.width, app.height);
 
+    scene_Initialize(app.scene);
+
     return true;
 }
 
@@ -61,5 +63,8 @@ void app_Update(App& app)
 void app_Shutdown(App& app)
 {
     render_target_Destroy(app.viewportRenderTarget);
+
+    scene_Destroy(app.scene);
+
     window_Shutdown(app.window);
 }

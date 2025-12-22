@@ -3,10 +3,17 @@ project(engine)
 add_library(${PROJECT_NAME}
     SHARED
         src/app.cpp
+        
         src/window/window.cpp
+        
         src/gui/gui.cpp
+        
+        src/utils/file.cpp
+
         src/renderTarget.cpp
         src/renderer.cpp
+        src/scene.cpp
+        src/shader.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}

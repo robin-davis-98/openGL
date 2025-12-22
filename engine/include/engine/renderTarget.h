@@ -13,4 +13,4 @@ struct RenderTarget
 
 RenderTarget render_target_Create(int width, int height);
 void render_target_Resize(RenderTarget& render_target, int width, int height);
-void render_target_Destroy(RenderTarget& redner_target);
+void render_target_Destroy(RenderTarget& render_target);

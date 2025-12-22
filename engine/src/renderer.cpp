@@ -1,7 +1,7 @@
 #include "engine/renderer.h"
 #include <glad/glad.h>
 
-void renderer_Initializ()
+void renderer_Initialize()
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -34,6 +34,8 @@ void renderer_RenderViewport(App& app)
     );
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    scene_Render(app.scene, app.viewportRenderTarget);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

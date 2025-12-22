@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/engine.h"
-#include "engine/colour.h"
+#include "engine/utils/colour.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>

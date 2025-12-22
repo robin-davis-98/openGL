@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+set(ASSETS_SOURCE_DIR ${CMAKE_SOURCE_DIR}/assets)
+set(ASSETS_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets)
+
 find_package(Doxygen REQUIRED)
 
 if(DOXYGEN_FOUND)
@@ -32,3 +35,9 @@ add_subdirectory(lib)
 add_subdirectory(engine)
 add_subdirectory(runtime)
 
+add_custom_target(copy_assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${ASSETS_SOURCE_DIR}
+            ${ASSETS_OUTPUT_DIR}
+    COMMENT "Copying assets to runtime"
+)

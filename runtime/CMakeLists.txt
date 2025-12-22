@@ -19,3 +19,5 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     $<TARGET_FILE:engine>
     $<TARGET_FILE_DIR:${PROJECT_NAME}>
 )
+
+add_dependencies(modelViewer copy_assets)
