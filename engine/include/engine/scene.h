@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "engine/shader.h"
+#include "engine/camera.h"
 #include "engine/engine.h"
 #include "engine/model.h"
 #include "engine/renderTarget.h"
@@ -11,6 +12,7 @@ struct ENGINE_API Scene
 {
     Model models[MAX_SCENE_MODELS];
     uint32_t modelCount = 0;
+    Camera* currentCamera;
 };
 
 ENGINE_API Scene scene_Create();

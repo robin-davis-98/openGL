@@ -9,9 +9,7 @@ struct UniformBuffer
     uint32_t bindingPoint;
 };
 
-UniformBuffer ubo_Create(uint32_t size, uint32_t bindingPoint);
-
-void ubo_BindToShader(const UniformBuffer& ubo, const Shader& shader, const std::string& blockName);
-void ubo_Update(const UniformBuffer& ubo, uint32_t offset, uint32_t size, const void* data);
-
-void ubo_Destroy(UniformBuffer& ubo);
+ENGINE_API UniformBuffer ubo_Create(uint32_t size, uint32_t bindingPoint);
+ENGINE_API void ubo_BindToShader(const UniformBuffer& ubo, const Shader& shader, const std::string& blockName);
+ENGINE_API void ubo_Update(const UniformBuffer& ubo, uint32_t offset, uint32_t size, const void* data);
+ENGINE_API void ubo_Destroy(UniformBuffer& ubo);

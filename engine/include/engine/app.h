@@ -4,6 +4,8 @@
 #include "engine/window.h"
 #include "engine/renderTarget.h"
 #include "engine/scene.h"
+#include "engine/camera.h"
+#include "engine/ubo.h"
 #include <string>
 
 struct ENGINE_API App
@@ -11,6 +13,11 @@ struct ENGINE_API App
     uint32_t width;
     uint32_t height;
     std::string title;
+    float lastFrame;
+    float deltaTime;
+
+    Camera currentCamera;
+    UniformBuffer cameraUBO;
 
     Window window;
     RenderTarget viewportRenderTarget;

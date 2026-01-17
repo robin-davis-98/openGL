@@ -20,7 +20,7 @@ void gui_Initialize(Window& window)
     ImGui_ImplOpenGL3_Init("#version 430");
 }
 
-void gui_RenderViewport(RenderTarget& render_target)
+void gui_RenderViewport(App& app)
 {
     ImGui::Begin("Viewport");
 
@@ -29,11 +29,11 @@ void gui_RenderViewport(RenderTarget& render_target)
     // Resize FBO if needed
     if (size.x > 0 && size.y > 0)
     {
-        if ((int)size.x != render_target.width ||
-            (int)size.y != render_target.height)
+        if ((int)size.x != app.viewportRenderTarget.width ||
+            (int)size.y != app.viewportRenderTarget.height)
         {
             render_target_Resize(
-                render_target,
+                app.viewportRenderTarget,
                 (int)size.x,
                 (int)size.y
             );
@@ -42,14 +42,23 @@ void gui_RenderViewport(RenderTarget& render_target)
 
     // ALWAYS draw the viewport image
     ImGui::Image(
-        (void*)(intptr_t)render_target.colourTexture,
+        (void*)(intptr_t)app.viewportRenderTarget.colourTexture,
         size,
         ImVec2(0, 1),
         ImVec2(1, 0)
     );
 
-    ImGui::End();
-}
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            glfwSetInputMode(app.window.nativeHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            if (app.activeScene && app.activeScene->currentCamera)
+            {
+                app.activeScene->currentCamera->firstMouse = true;
+            }
+        }
+        ImGui::End();
+    }
+
 
 void gui_NewFrame(App& app)
 {
@@ -97,7 +106,7 @@ void gui_NewFrame(App& app)
     }
 
     ImGui::Separator();
-    
+
     if (ImGui::Button("Scene 3", ImVec2(-1, 0)))
     {
         app.sceneChange = 2;

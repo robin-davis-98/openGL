@@ -10,14 +10,15 @@ Model model_Load(const std::string& filePath)
     return model;
 }
 
-Model model_Create(Vertex* vertices, uint32_t count, Material material)
+Model model_Create(Vertex* vertices, uint32_t vertexCount, uint32_t* indices, uint32_t indexCount, Material material)
 {
     Model model = {};
 
-    Mesh mesh = mesh_Create(vertices, count);
+    Mesh mesh = mesh_Create(vertices, vertexCount, indices, indexCount);
     
     model.parts[0].mesh = mesh;
     model.parts[0].material = material;
+    model.parts[0].position = glm::vec3(0.0f);
     model.parts[0].active = true;
     model.partCount = 1;
 
@@ -34,10 +35,18 @@ void model_Draw(const Model& model)
         if (part.material.shader)
         {
             shader_Use(*part.material.shader);
+
+            glm::mat4 modelMatrix = glm::mat4(1.0f);
+
+            modelMatrix = glm::translate(modelMatrix, model.position);
+
+            modelMatrix = glm::translate(modelMatrix, part.position);
+
+            shader_SetMat4(*part.material.shader, "model", modelMatrix);
         }
 
         glBindVertexArray(part.mesh.vertexArray);
-        glDrawArrays(GL_TRIANGLES, 0, part.mesh.vertexCount);
+        glDrawElements(GL_TRIANGLES, part.mesh.indexCount, GL_UNSIGNED_INT, 0);
     }
 
     glBindVertexArray(0);

@@ -1,5 +1,6 @@
 #include "engine/app.h"
 #include "engine/renderer.h"
+#include "engine/ubo.h"
 #include "gui.h"
 #include <iostream>
 
@@ -11,6 +12,8 @@ App app_Create(uint32_t width, uint32_t height, const std::string& title, const 
     app.title = title;
     app.startScene = (Scene*)start;
     app.activeScene = nullptr;
+    app.lastFrame = 0.0f;
+    app.deltaTime = 0.0f;
 
     return app;
 }
@@ -52,15 +55,49 @@ void app_FixedUpdate(App& app)
 
 void app_Update(App& app)
 {
+    float currentFrame = (float)glfwGetTime();
+    app.deltaTime = currentFrame - app.lastFrame;
+    app.lastFrame = currentFrame;
+
+    if (app.activeScene && app.activeScene->currentCamera)
+    {
+        Camera& cam = *app.activeScene->currentCamera;
+
+        if (app.viewportRenderTarget.height > 0) {
+            cam.aspectRatio = (float)app.viewportRenderTarget.width / (float)app.viewportRenderTarget.height;
+        }
+
+        if (glfwGetInputMode(app.window.nativeHandle, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+        {
+            if (glfwGetKey(app.window.nativeHandle, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            {
+                glfwSetInputMode(app.window.nativeHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                cam.firstMouse = true;
+            } else {
+
+                camera_ProcessInput(cam, app, app.deltaTime);
+
+                double xpos, ypos;
+                glfwGetCursorPos(app.window.nativeHandle, &xpos, &ypos);
+                camera_ProcessMouse(cam, (float)xpos, (float)ypos);
+            }
+        }
+
+        CameraMatrices mats;
+        mats.projection = camera_GetProjectionMatrix(cam);
+        mats.view = camera_GetViewMatrix(cam);
+        ubo_Update(app.cameraUBO, 0, sizeof(CameraMatrices), &mats);
+
+    }
+
     renderer_RenderViewport(app);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, app.width, app.height);
-
     window_Clear(app.window);
 
     gui_NewFrame(app);
-    gui_RenderViewport(app.viewportRenderTarget);
+    gui_RenderViewport(app);
     gui_Render();
 
     window_SwapBuffers(app.window);

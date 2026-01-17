@@ -18,6 +18,7 @@ add_library(${PROJECT_NAME}
         src/renderer/material.cpp
         src/renderer/shader.cpp
         src/renderer/ubo.cpp
+        src/renderer/camera.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}
