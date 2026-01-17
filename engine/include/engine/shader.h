@@ -3,13 +3,14 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <string>
+#include "engine/engine.h"
 
-struct Shader
+struct ENGINE_API Shader
 {
     uint32_t programID = 0;
 };
 
-Shader shader_Create(const std::string& vertexPath, const std::string& fragmentPath);
+ENGINE_API Shader shader_Create(const std::string& vertexPath, const std::string& fragmentPath);
 
 void shader_Destroy(Shader& shader);
 void shader_Use(const Shader& shader);

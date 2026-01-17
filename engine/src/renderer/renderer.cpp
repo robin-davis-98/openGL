@@ -35,7 +35,10 @@ void renderer_RenderViewport(App& app)
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    scene_Render(app.scene, app.viewportRenderTarget);
+    if (app.activeScene != nullptr)
+    {
+        scene_Render(*app.activeScene, app.viewportRenderTarget);
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -1,15 +1,20 @@
 #pragma once
 #include <cstdint>
 #include "engine/shader.h"
+#include "engine/engine.h"
+#include "engine/model.h"
 #include "engine/renderTarget.h"
 
-struct Scene
+#define MAX_SCENE_MODELS 32
+
+struct ENGINE_API Scene
 {
-    Shader shader;
-    uint32_t vertexArray = 0;
-    uint32_t vertexBuffer = 0;
+    Model models[MAX_SCENE_MODELS];
+    uint32_t modelCount = 0;
 };
 
-void scene_Initialize(Scene& scene);
-void scene_Render(Scene& scene, RenderTarget& target);
-void scene_Destroy(Scene& scene);
+ENGINE_API Scene scene_Create();
+
+ENGINE_API void scene_AddModel(Scene& scene, const Model& model);
+ENGINE_API void scene_Render(Scene& scene, RenderTarget& target);
+ENGINE_API void scene_Destroy(Scene& scene);

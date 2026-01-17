@@ -10,10 +10,14 @@ add_library(${PROJECT_NAME}
         
         src/utils/file.cpp
 
-        src/renderTarget.cpp
-        src/renderer.cpp
-        src/scene.cpp
-        src/shader.cpp
+        src/renderer/renderTarget.cpp
+        src/renderer/renderer.cpp
+        src/renderer/scene.cpp
+        src/renderer/model.cpp
+        src/renderer/mesh.cpp
+        src/renderer/material.cpp
+        src/renderer/shader.cpp
+        src/renderer/ubo.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}

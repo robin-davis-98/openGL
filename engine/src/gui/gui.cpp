@@ -1,4 +1,5 @@
 #include "gui.h"
+#include <iostream>
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -50,7 +51,7 @@ void gui_RenderViewport(RenderTarget& render_target)
     ImGui::End();
 }
 
-void gui_NewFrame()
+void gui_NewFrame(App& app)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -81,16 +82,33 @@ void gui_NewFrame()
     ImGui::DockSpace(dockspace_id, ImVec2(0, 0), dockspace_flags);
     ImGui::End();
 
-    // Create windows --------------------------------------------------------
     ImGui::Begin("Scene Hierarchy");
-    ImGui::Text("Scene");
+
+    if (ImGui::Button("Scene 1", ImVec2(-1, 0)))
+    {
+        app.sceneChange = 0;
+    }
+
+    ImGui::Separator();
+
+    if (ImGui::Button("Scene 2", ImVec2(-1, 0)))
+    {
+        app.sceneChange = 1;
+    }
+
+    ImGui::Separator();
+    
+    if (ImGui::Button("Scene 3", ImVec2(-1, 0)))
+    {
+        app.sceneChange = 2;
+    }
+
     ImGui::End();
 
     ImGui::Begin("Runtime Statistics");
     ImGui::Text("Runtime");
     ImGui::End();
 
-    // Build layout ONCE after windows exist --------------------------------
     if (!dockspace_initialized)
     {
         ImGui::DockBuilderRemoveNode(dockspace_id);

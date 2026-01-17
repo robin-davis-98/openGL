@@ -19,7 +19,5 @@ std::string read_file(const std::string& path)
 
     std::stringstream buffer;
     buffer << file.rdbuf();
-    std::cout << "File Name: " << path << " | File data: " << buffer.str() << std::endl;
-
     return buffer.str();
 }

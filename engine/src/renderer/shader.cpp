@@ -2,6 +2,7 @@
 #include "engine/utils/file.h"
 #include <iostream>
 #include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 Shader shader_Create(const std::string& vertexPath, const std::string& fragmentPath)
 {
@@ -50,7 +51,7 @@ void shader_Use(const Shader& shader)
     glUseProgram(shader.programID);
 }
 
-static uint32_t shader_Compile(uint32_t type, const std::string& source)
+uint32_t shader_Compile(uint32_t type, const std::string& source)
 {
     uint32_t shader = glCreateShader(type);
     const char* src = source.c_str();
@@ -68,4 +69,39 @@ static uint32_t shader_Compile(uint32_t type, const std::string& source)
     }
 
     return shader;
+}
+
+void shader_SetInt(const Shader& shader, const std::string& name, int value)
+{
+    glUniform1i(glGetUniformLocation(shader.programID, name.c_str()), value);
+}
+
+void shader_SetBool(const Shader& shader, const std::string& name, bool value)
+{
+    glUniform1i(glGetUniformLocation(shader.programID, name.c_str()), (int) value);
+}
+
+void shader_SetFloat(const Shader& shader, const std::string& name, float value)
+{
+    glUniform1f(glGetUniformLocation(shader.programID, name.c_str()), value);
+}
+
+void shader_SetVec2(const Shader& shader, const std::string& name, const glm::vec2& value)
+{
+    glUniform2fv(glGetUniformLocation(shader.programID, name.c_str()), 1, glm::value_ptr(value));
+}
+
+void shader_SetVec3(const Shader& shader, const std::string& name, const glm::vec3& value)
+{
+    glUniform3fv(glGetUniformLocation(shader.programID, name.c_str()), 1, glm::value_ptr(value));
+}
+
+void shader_SetVec4(const Shader& shader, const std::string& name, const glm::vec4& value)
+{
+    glUniform4fv(glGetUniformLocation(shader.programID, name.c_str()), 1, glm::value_ptr(value));
+}
+
+void shader_SetMat4(const Shader& shader, const std::string& name, const glm::mat4& value)
+{
+    glUniformMatrix4fv(glGetUniformLocation(shader.programID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
