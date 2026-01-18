@@ -97,11 +97,11 @@ int main()
     redCube2->position = glm::vec3(5.0f, 0.0f, 0.0f);
     redCube1->rotation.y = 30.0f;
 
-    shader_SetVec3(basicShader, "uBaseColour", glm::vec3(1.0f, 0.0f, 0.0f));
+    shader_SetVec3(basicShader, "uBaseColour", {1.0f, 0.0f, 0.0f});
 
-    Node* lightNode = scene_AddPointLight(red, nullptr, glm::vec3(1, 1, 1), 10.0f, 15.0f);
+    Node* lightNode = scene_AddPointLight(red, nullptr, glm::vec3(1, 1, 1), 2.0f, 20.0f, "Light");
 
-    lightNode->position = glm::vec3(2.0f, 5.0f, 0.0f);
+    lightNode->position = glm::vec3(2.0f, 2.0f, 2.0f);
 
     Camera mainCam = {};
     mainCam.position    = glm::vec3(0.0f, 0.0f, 5.0f);

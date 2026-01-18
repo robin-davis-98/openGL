@@ -77,46 +77,25 @@ void scene_RenderSelection(Node* node)
 {
     if (node == selectedNode && node->type == NodeType::Model && node->model)
     {
-        glEnable(GL_STENCIL_TEST);
+        // 1. Setup Outline State
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT); // FIX: Cull the front, show only the back
+        glFrontFace(GL_CCW);  // Standard winding
         
-        // --- MASKING PASS ---
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        glStencilMask(0xFF); 
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
 
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        glDepthMask(GL_FALSE);
-        glDepthFunc(GL_LEQUAL);
-        
-        model_Draw(node->model, node->worldMatrix);
-
-        // --- OUTLINE PASS ---
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        glStencilMask(0x00); 
-        
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDepthMask(GL_TRUE);
-
-        glDisable(GL_CULL_FACE); 
-        glDisable(GL_DEPTH_TEST); 
-
+        // 2. Setup Shader
         shader_Use(outlineShader);
         shader_SetVec3(outlineShader, "uColour", glm::vec3(1.0f, 0.8f, 0.0f));
         
-        glm::mat4 outlineScale = glm::scale(node->worldMatrix, glm::vec3(1.005f));
+        // 3. Draw Scaled Mesh
+        // A scale of 1.03f usually looks cleaner for an inverted hull
+        glm::mat4 outlineScale = glm::scale(node->worldMatrix, glm::vec3(1.01f));
         model_DrawWithShader(node->model, outlineScale, outlineShader);
 
-        // --- CLEANUP IMMEDIATELY ---
-        // Restore standard scene state so the next node draws correctly
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LESS);
-        
-        glEnable(GL_CULL_FACE); 
-        glCullFace(GL_BACK);
-        glFrontFace(GL_CCW);
-        
-        glDisable(GL_STENCIL_TEST);
+        // 4. RESET STATE IMMEDIATELY
+        glCullFace(GL_BACK); // Back to normal
     }
 
     // 2. Recursive call (now safe because state is restored above)

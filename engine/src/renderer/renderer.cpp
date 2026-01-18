@@ -50,15 +50,34 @@ void renderer_InitializeSSBO()
     std::cout << "SUCCESS: lightSSBO created with ID: " << rendererData.lightSSBO << std::endl;
 }
 
+void collect_Lights_Recursive(Node* node, LightBuffer& buffer)
+{
+    if (node->type == NodeType::Light && buffer.count < 1024)
+    {
+        PointLight& pl = buffer.lights[buffer.count];
+        
+        // Use the world matrix to get the actual position in the scene
+        pl.position = glm::vec4(glm::vec3(node->worldMatrix[3]), node->light.radius);
+        pl.colour = glm::vec4(node->light.colour, node->light.intensity);
+        
+        buffer.count++;
+    }
+
+    for (Node* child : node->children)
+    {
+        collect_Lights_Recursive(child, buffer);
+    }
+}
+
 void renderer_UpdateLights(Scene& scene)
 {
+
     rendererData.lightData.count = 0;
 
-    // Loop through scene nodes to find lights (assuming you have a way to identify them)
-    // For now, let's just use your hardcoded values but ensure they are visible
-    rendererData.lightData.lights[0].position = glm::vec4(2.0f, 5.0f, 0.0f, 15.0f); // 15 unit radius
-    rendererData.lightData.lights[0].colour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);    // White, 1.0 intensity
-    rendererData.lightData.count = 1;
+    if (scene.root)
+    {
+        collect_Lights_Recursive(scene.root, rendererData.lightData);
+    }
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, rendererData.lightSSBO);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(LightBuffer), &rendererData.lightData);

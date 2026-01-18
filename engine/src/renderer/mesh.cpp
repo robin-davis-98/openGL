@@ -23,7 +23,7 @@ Mesh mesh_Create(Vertex* vertices, uint32_t vertexCount, uint32_t* indices, uint
     glEnableVertexAttribArray(0);
 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, textureCoords));
     glEnableVertexAttribArray(2);
@@ -37,7 +37,7 @@ void mesh_Destroy(Mesh& mesh)
 {
     if (mesh.vertexArray) glDeleteVertexArrays(1, &mesh.vertexArray);
     if (mesh.vertexBuffer) glDeleteBuffers(1, &mesh.vertexBuffer);
-    if (mesh.vertexBuffer) glDeleteBuffers(1, &mesh.elementBuffer);
+    if (mesh.elementBuffer) glDeleteBuffers(1, &mesh.elementBuffer);
 
     mesh = {};
 }
