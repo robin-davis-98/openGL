@@ -91,17 +91,19 @@ int main()
     scene_AddModel(blue, nullptr, &triangleModelBlue, "BlueCube");
     scene_AddModel(green, nullptr, &triangleModelGreen, "GreenCube");
 
-    Node* redCube1 = scene_AddModel(red, nullptr, &triangleModel, "RedCube");
+    Node* Cube1 = scene_AddModel(red, nullptr, &triangleModel, "Cube");
     Node* redCube2 = scene_AddModel(red, nullptr, &triangleModelBlue, "BlueCube");
 
     redCube2->position = glm::vec3(5.0f, 0.0f, 0.0f);
-    redCube1->rotation.y = 30.0f;
+    Cube1->rotation.y = 30.0f;
 
-    shader_SetVec3(basicShader, "uBaseColour", {1.0f, 0.0f, 0.0f});
+    shader_SetVec3(basicShader, "uBaseColour", {1.0f, 1.0f, 1.0f});
 
     Node* lightNode = scene_AddPointLight(red, nullptr, glm::vec3(1, 1, 1), 2.0f, 20.0f, "Light");
 
     lightNode->position = glm::vec3(2.0f, 2.0f, 2.0f);
+
+    Node* lightNode2 = scene_AddPointLight(red, redCube2, glm::vec3(0, 0, 1), 5.0f, 5.0f, "Light");
 
     Camera mainCam = {};
     mainCam.position    = glm::vec3(0.0f, 0.0f, 5.0f);

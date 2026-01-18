@@ -1,11 +1,16 @@
 #version 430 core
+
+// Match the local size to the grid dispatch (e.g., 16, 9, 1) or keep 1,1,1 for simplicity
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct Cluster 
 {
     vec4 minPoint;
     vec4 maxPoint;
-}; // Added missing semicolon
+    uint count;           // Matches C++ uint32_t count
+    uint lightIndices[100]; // Matches C++ lightIndices[100]
+    uint _padding[3];     // Matches C++ _padding[3]
+};
 
 layout(std430, binding = 2) buffer ClusterBuffer
 {
@@ -33,39 +38,38 @@ vec4 screenToView(vec4 screen)
 
 void main()
 {
+    // Calculate global index
     uint clusterIndex = gl_GlobalInvocationID.x +
                         gl_GlobalInvocationID.y * u_GridSize.x +
                         gl_GlobalInvocationID.z * u_GridSize.x * u_GridSize.y;
 
-    // 1. Calculate the tile size in screen space (pixels)
     vec2 tileSize = u_ScreenSize / vec2(u_GridSize.xy);
 
-    // 2. Find the min/max 2D points for this tile in screen space
-    // Using gl_GlobalInvocationID for the current cluster's X and Y
+    // 1. Calculate screen space bounds
     vec4 minPointSS = vec4(vec2(gl_GlobalInvocationID.xy) * tileSize, -1.0, 1.0);
     vec4 maxPointSS = vec4(vec2(gl_GlobalInvocationID.xy + 1) * tileSize, -1.0, 1.0);
 
-    // 3. Convert screen space to view space (at the near plane)
+    // 2. Convert to view space
     vec3 minPointVS = screenToView(minPointSS).xyz;
     vec3 maxPointVS = screenToView(maxPointSS).xyz;
 
-    // 4. Calculate Depth (Z) for this cluster slice
-    // We use exponential distribution so clusters are smaller near the camera
+    // 3. Logarithmic Z-Slicing 
     float zNear = nearPlane * pow(farPlane / nearPlane, gl_GlobalInvocationID.z / float(u_GridSize.z));
     float zFar  = nearPlane * pow(farPlane / nearPlane, (gl_GlobalInvocationID.z + 1) / float(u_GridSize.z));
 
-    // 5. Intersect the frustum rays with the near and far Z-planes of the cluster
-    // Since view space looks down -Z, we multiply by -zNear and -zFar
+    // 4. Project rays to the specific Z planes of this cluster
     vec3 minPointNear = minPointVS * (-zNear / minPointVS.z);
     vec3 minPointFar  = minPointVS * (-zFar / minPointVS.z);
     vec3 maxPointNear = maxPointVS * (-zNear / maxPointVS.z);
     vec3 maxPointFar  = maxPointVS * (-zFar / maxPointVS.z);
 
-    // 6. Compute AABB min/max bounds from the 8 corners
-    // In view space, Z is negative, so minZ is actually -zFar and maxZ is -zNear
     vec3 minBounds = min(min(minPointNear, minPointFar), min(maxPointNear, maxPointFar));
     vec3 maxBounds = max(max(minPointNear, minPointFar), max(maxPointNear, maxPointFar));
 
+    // 5. Write only the AABB bounds
     clusters[clusterIndex].minPoint = vec4(minBounds, 1.0);
     clusters[clusterIndex].maxPoint = vec4(maxBounds, 1.0);
+    
+    // IMPORTANT: Initialize count to 0 so the light culler starts fresh
+    clusters[clusterIndex].count = 0; 
 }

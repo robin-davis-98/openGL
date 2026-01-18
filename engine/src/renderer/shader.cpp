@@ -112,6 +112,13 @@ void shader_SetInt(const Shader& shader, const std::string& name, int value)
     glUniform1i(glGetUniformLocation(shader.programID, name.c_str()), value);
 }
 
+void shader_SetUI3(const Shader& shader, const std::string& name, uint32_t x, uint32_t y, uint32_t z)
+{
+    shader_Use(shader);
+
+    glUniform3ui(glGetUniformLocation(shader.programID, name.c_str()), x, y, z);
+}
+
 void shader_SetBool(const Shader& shader, const std::string& name, bool value)
 {
     shader_Use(shader);

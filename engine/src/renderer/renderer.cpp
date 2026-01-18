@@ -15,7 +15,10 @@ void renderer_Initialize()
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
-    
+
+    rendererData.clusterBuildShader = shader_CreateCompute("assets/shaders/default/cluster_build.comp");
+    rendererData.cullShader = shader_CreateCompute("assets/shaders/default/cluster_cull.comp");
+
     renderer_InitializeSSBO();
 }
 
@@ -47,7 +50,11 @@ void renderer_InitializeSSBO()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, rendererData.lightSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    std::cout << "SUCCESS: lightSSBO created with ID: " << rendererData.lightSSBO << std::endl;
+    glGenBuffers(1, &rendererData.clusterSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, rendererData.clusterSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Cluster) * 3456, nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, rendererData.clusterSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void collect_Lights_Recursive(Node* node, LightBuffer& buffer)
@@ -69,6 +76,15 @@ void collect_Lights_Recursive(Node* node, LightBuffer& buffer)
     }
 }
 
+void renderer_BuildClusters(float screenWidth, float screenHeight)
+{
+
+    shader_SetUI3(rendererData.clusterBuildShader, "uGridSize", 16, 9, 24);
+    shader_SetVec2(rendererData.clusterBuildShader, "uScreenSize", glm::vec2(screenWidth, screenHeight));
+
+    shader_Dispatch(16, 9, 24);
+}
+
 void renderer_UpdateLights(Scene& scene)
 {
 
@@ -81,5 +97,20 @@ void renderer_UpdateLights(Scene& scene)
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, rendererData.lightSSBO);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(LightBuffer), &rendererData.lightData);
+
+    shader_Use(rendererData.cullShader);
+
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, rendererData.lightSSBO);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, rendererData.clusterSSBO);
+
+    glDispatchCompute(1, 1, 24);
+
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void renderer_CullLights()
+{
+    shader_Use(rendererData.cullShader);
+    
+    shader_Dispatch(1, 1, 24);
 }

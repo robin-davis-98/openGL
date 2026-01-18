@@ -1,0 +1,66 @@
+#version 430 core
+layout(local_size_x = 16, local_size_y = 9, local_size_z = 1) in;
+
+struct PointLight {
+    vec4 position; // View Space Position in xyz, Radius in w
+    vec4 colour;
+};
+
+struct Cluster {
+    vec4 minPoint;
+    vec4 maxPoint;
+    uint count;
+    uint lightIndices[100];
+    uint _padding[3];
+};
+
+layout(std430, binding = 1) buffer LightBuffer {
+    uint lightCount;
+    uint _pad[3];
+    PointLight lights[];
+};
+
+layout(std430, binding = 2) buffer ClusterBuffer {
+    Cluster clusters[];
+};
+
+layout(std140, binding = 0) uniform CameraData {
+    mat4 projection;
+    mat4 view;
+};
+
+// Helper: Square of distance from point to AABB
+float sqDistPointAABB(vec3 point, uint clusterIdx) {
+    float sqDist = 0.0;
+    for(int i = 0; i < 3; ++i) {
+        float v = point[i];
+        if(v < clusters[clusterIdx].minPoint[i]) sqDist += pow(clusters[clusterIdx].minPoint[i] - v, 2);
+        if(v > clusters[clusterIdx].maxPoint[i]) sqDist += pow(v - clusters[clusterIdx].maxPoint[i], 2);
+    }
+    return sqDist;
+}
+
+void main() {
+    uint clusterIdx = gl_GlobalInvocationID.x +
+                      gl_GlobalInvocationID.y * gl_NumWorkGroups.x +
+                      gl_GlobalInvocationID.z * gl_NumWorkGroups.x * gl_NumWorkGroups.y;
+
+    // 1. Reset cluster light count for this frame
+    clusters[clusterIdx].count = 0;
+
+    // 2. Cull lights against this cluster
+    for(uint i = 0; i < lightCount; i++) {
+        // IMPORTANT: Convert light position to VIEW SPACE to match cluster AABBs
+        vec3 lightPosVS = (view * vec4(lights[i].position.xyz, 1.0)).xyz;
+        float radius = lights[i].position.w;
+
+        // Sphere-AABB Intersection
+        if(sqDistPointAABB(lightPosVS, clusterIdx) <= (radius * radius)) {
+            uint slot = clusters[clusterIdx].count;
+            if(slot < 100) {
+                clusters[clusterIdx].lightIndices[slot] = i;
+                clusters[clusterIdx].count++;
+            }
+        }
+    }
+}
