@@ -53,6 +53,9 @@ bool window_Initialize(Window& window)
     glfwSwapInterval(1);
     glfwSetFramebufferSizeCallback(window.nativeHandle, framebuffer_size_callback);
     
+    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+
     return true;
 }
 

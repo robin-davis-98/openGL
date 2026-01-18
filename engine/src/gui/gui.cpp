@@ -22,6 +22,8 @@ void gui_Initialize(Window& window)
 
 void gui_RenderViewport(App& app)
 {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
     ImGui::Begin("Viewport");
 
     ImVec2 size = ImGui::GetContentRegionAvail();
@@ -49,16 +51,96 @@ void gui_RenderViewport(App& app)
     );
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        glfwSetInputMode(app.window.nativeHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        if (app.activeScene && app.activeScene->currentCamera)
         {
-            glfwSetInputMode(app.window.nativeHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            if (app.activeScene && app.activeScene->currentCamera)
-            {
-                app.activeScene->currentCamera->firstMouse = true;
-            }
+            app.activeScene->currentCamera->firstMouse = true;
         }
-        ImGui::End();
+    }
+    ImGui::End();
+
+    ImGui::PopStyleVar();
+}
+
+void gui_RenderMainMenuBar(App& app)
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if(ImGui::BeginMenu("System"))
+        {
+            if(ImGui::MenuItem("Exit", "Alt+F4"))
+            {
+                glfwSetWindowShouldClose(app.window.nativeHandle, true);
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if(ImGui::BeginMenu("Scenes"))
+        {
+            if(ImGui::MenuItem("Save")){}
+            if(ImGui::MenuItem("Load")){}
+            
+            ImGui::Separator();
+
+            if(ImGui::MenuItem("Scene 1")) { app.sceneChange = 0; }
+            if(ImGui::MenuItem("Scene 2")) { app.sceneChange = 1; }
+            if(ImGui::MenuItem("Scene 3")) { app.sceneChange = 2; }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+}
+
+void gui_DrawNodeTree(Node* node)
+{
+    if (!node) return;
+
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    if (node->children.empty()) flags |= ImGuiTreeNodeFlags_Leaf;
+    if (selectedNode == node) flags |= ImGuiTreeNodeFlags_Selected;
+
+    bool opened = ImGui::TreeNodeEx((void*)node, flags, "%s", node->name.c_str());
+
+    if (ImGui::IsItemClicked())
+    {
+        selectedNode = node;
     }
 
+    if (opened)
+    {
+        for (Node* child : node->children)
+        {
+            gui_DrawNodeTree(child);
+        }
+        ImGui::TreePop();
+    }
+}
+
+void gui_RenderHierarchy(App& app)
+{
+    ImGui::Begin("Scene Hierarchy");
+
+    if (app.activeScene && app.activeScene->root)
+    {
+        for (Node* child : app.activeScene->root->children)
+        {
+            gui_DrawNodeTree(child);
+        }
+    }
+
+    ImGui::End();
+}
+
+void gui_RenderRuntime(App& app)
+{
+    ImGui::Begin("Runtime Statistics");
+    ImGui::Text("Runtime");
+    ImGui::End();
+}
 
 void gui_NewFrame(App& app)
 {
@@ -84,39 +166,19 @@ void gui_NewFrame(App& app)
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
     ImGui::Begin("Dockspace Window", nullptr, window_flags);
-    ImGui::PopStyleVar(2);
+    ImGui::PopStyleVar(3);
 
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0, 0), dockspace_flags);
     ImGui::End();
 
-    ImGui::Begin("Scene Hierarchy");
-
-    if (ImGui::Button("Scene 1", ImVec2(-1, 0)))
-    {
-        app.sceneChange = 0;
-    }
-
-    ImGui::Separator();
-
-    if (ImGui::Button("Scene 2", ImVec2(-1, 0)))
-    {
-        app.sceneChange = 1;
-    }
-
-    ImGui::Separator();
-
-    if (ImGui::Button("Scene 3", ImVec2(-1, 0)))
-    {
-        app.sceneChange = 2;
-    }
-
-    ImGui::End();
-
-    ImGui::Begin("Runtime Statistics");
-    ImGui::Text("Runtime");
-    ImGui::End();
+    gui_RenderMainMenuBar(app);
+    gui_RenderViewport(app);
+    gui_RenderHierarchy(app);
+    gui_RenderRuntime(app);
 
     if (!dockspace_initialized)
     {
@@ -140,8 +202,10 @@ void gui_NewFrame(App& app)
     }
 }
 
-void gui_Render()
+void gui_Render(App& app)
 {
+    gui_NewFrame(app);
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

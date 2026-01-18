@@ -37,6 +37,40 @@ Shader shader_Create(const std::string& vertexPath, const std::string& fragmentP
     return shader;
 }
 
+Shader shader_CreateCompute(const std::string& computePath)
+{
+    Shader shader{};
+
+    std::string computeSource = read_file(computePath);
+    uint32_t computeShader = shader_Compile(GL_COMPUTE_SHADER, computeSource);
+
+    shader.programID = glCreateProgram();
+    glAttachShader(shader.programID, computeShader);
+    glLinkProgram(shader.programID);
+
+    int success;
+    glGetProgramiv(shader.programID, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        char infoLog[512];
+        glGetProgramInfoLog(shader.programID, 512, nullptr, infoLog);
+        std::cerr << "Compute Shader link error:\n" << infoLog << std::endl;
+        glDeleteProgram(shader.programID);
+        shader.programID = 0;
+    }
+
+    glDeleteShader(computeShader);
+
+    return shader;
+}
+
+void shader_Dispatch(uint32_t x, uint32_t y, uint32_t z)
+{
+    glDispatchCompute(x, y, z);
+    // Ensure all memory writes to SSBOs are finished before the next shader uses them
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
 void shader_Destroy(Shader& shader)
 {
     if (shader.programID)

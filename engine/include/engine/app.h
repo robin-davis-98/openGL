@@ -5,6 +5,7 @@
 #include "engine/renderTarget.h"
 #include "engine/scene.h"
 #include "engine/camera.h"
+#include "engine/shader.h"
 #include "engine/ubo.h"
 #include <string>
 
@@ -26,6 +27,8 @@ struct ENGINE_API App
     Scene* activeScene;
     uint32_t sceneChange = -1;
 };
+
+extern Shader outlineShader;
 
 ENGINE_API App app_Create(uint32_t width, uint32_t height, const std::string& title, const Scene* start);
 

@@ -1,53 +1,203 @@
 #include "engine/scene.h"
 #include "engine/shader.h"
+#include "engine/renderer.h"
 #include <iostream>
 #include <glad/glad.h>
+
+Node* selectedNode = nullptr;
 
 Scene scene_Create()
 {
     Scene scene = {};
-    scene.modelCount = 0;
 
-    for (int i = 0; i < MAX_SCENE_MODELS; ++i)
-    {
-        scene.models[i] = {};
-    }
+    scene.root = new Node();
+    scene.root->name = "Root";
+    scene.root->type = NodeType::Empty;
+    scene.root->parent = nullptr;
+    scene.root->position = {0, 0, 0};
+    scene.root->rotation = {0, 0, 0};
+    scene.root->scale = {1, 1, 1};
+    scene.root->worldMatrix = glm::mat4(1.0f);
 
     return scene;
 }
 
-void scene_AddModel(Scene& scene, const Model& model)
+Node* scene_AddModel(Scene& scene, Node* parent, Model* model, const std::string& name)
 {
-    if (scene.modelCount >= MAX_SCENE_MODELS)
+    Node* newNode = new Node();
+    newNode->name = name;
+    newNode->type = NodeType::Model;
+    newNode->model = model;
+    newNode->parent = parent ? parent : scene.root;
+    
+    // Link to hierarchy
+    newNode->parent->children.push_back(newNode);
+
+    return newNode;
+}
+Node* scene_AddPointLight(Scene& scene, Node* parent, glm::vec3 colour, float intensity, float radius, const std::string& name)
+{
+    Node* newNode = new Node();
+    newNode->name = name;
+    newNode->type = NodeType::Light;
+    
+    newNode->position = {0, 0, 0};
+    newNode->rotation = {0, 0, 0};
+    newNode->scale = {1, 1, 1};
+    newNode->worldMatrix = glm::mat4(1.0f);
+
+    newNode->light.colour = colour;
+    newNode->light.intensity = intensity;
+    newNode->light.radius = radius;
+    newNode->model = nullptr;
+
+    newNode->parent = parent ? parent : scene.root;
+    if (newNode->parent)
     {
-        return;
+        newNode->parent->children.push_back(newNode);
     }
 
-    scene.models[scene.modelCount] = model;
-    scene.modelCount++;
+    return newNode;
 }
 
-void scene_Render(Scene& scene, RenderTarget& target)
+void scene_RenderNode(Node* node)
+{
+    if (node->type == NodeType::Model && node->model)
+    {
+        model_Draw(node->model, node->worldMatrix);
+    }
+
+    for(Node* child : node->children)
+    {
+        scene_RenderNode(child);
+    }
+}
+
+void scene_RenderSelection(Node* node)
+{
+    if (node == selectedNode && node->type == NodeType::Model && node->model)
+    {
+        glEnable(GL_STENCIL_TEST);
+        
+        // --- MASKING PASS ---
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilMask(0xFF); 
+
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        
+        model_Draw(node->model, node->worldMatrix);
+
+        // --- OUTLINE PASS ---
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00); 
+        
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+
+        glDisable(GL_CULL_FACE); 
+        glDisable(GL_DEPTH_TEST); 
+
+        shader_Use(outlineShader);
+        shader_SetVec3(outlineShader, "uColour", glm::vec3(1.0f, 0.8f, 0.0f));
+        
+        glm::mat4 outlineScale = glm::scale(node->worldMatrix, glm::vec3(1.005f));
+        model_DrawWithShader(node->model, outlineScale, outlineShader);
+
+        // --- CLEANUP IMMEDIATELY ---
+        // Restore standard scene state so the next node draws correctly
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+        
+        glEnable(GL_CULL_FACE); 
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
+        
+        glDisable(GL_STENCIL_TEST);
+    }
+
+    // 2. Recursive call (now safe because state is restored above)
+    for(Node* child : node->children)
+    {
+        scene_RenderSelection(child);
+    }
+}
+
+void scene_Render(Scene& scene, RenderTarget& target, Colour& clearColour)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, target.fbo);
     glViewport(0, 0, target.width, target.height);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(
+        clearColour.rgba.r,
+        clearColour.rgba.g,
+        clearColour.rgba.b,
+        clearColour.rgba.a
+    );
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
 
-    for (uint32_t i = 0; i < scene.modelCount; i++)
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+    if (scene.root)
     {
-        model_Draw(scene.models[i]);
+        node_UpdateWorldMatrix(scene.root, glm::mat4(1.0f));
+
+        renderer_UpdateLights(scene);
+
+        scene_RenderNode(scene.root);
+        scene_RenderSelection(scene.root);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void scene_Destroy(Scene& scene)
+void node_DestroyRecursive(Node* node)
 {
-    for (uint32_t i = 0; i < scene.modelCount; i++)
+    if (!node) return;
+
+    for (Node* child : node->children)
     {
-        model_Destroy(scene.models[i]);
+        node_DestroyRecursive(child);
     }
 
-    scene.modelCount = 0;
+    if (node->type == NodeType::Model && node->model)
+    {
+        model_Destroy(node->model);
+    }
+
+    delete node;
+}
+
+void scene_Destroy(Scene& scene)
+{
+    node_DestroyRecursive(scene.root);
+    scene.root = nullptr;
+}
+
+void node_UpdateWorldMatrix(Node* node, glm::mat4 parentTransform)
+{
+    glm::mat4 local = glm::translate(glm::mat4(1.0f), node->position);
+
+    local = glm::rotate(local, glm::radians(node->rotation.x), {1, 0, 0});
+    local = glm::rotate(local, glm::radians(node->rotation.y), {0, 1, 0});
+    local = glm::rotate(local, glm::radians(node->rotation.z), {0, 0, 1});
+
+    local = glm::scale(local, node->scale);
+
+    node->worldMatrix = parentTransform * local;
+
+    for (Node* child : node->children)
+    {
+        node_UpdateWorldMatrix(child, node->worldMatrix);
+    }
 }

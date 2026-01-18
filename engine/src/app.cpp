@@ -4,6 +4,8 @@
 #include "gui.h"
 #include <iostream>
 
+Shader outlineShader;
+
 App app_Create(uint32_t width, uint32_t height, const std::string& title, const Scene* start)
 {
     App app;
@@ -30,7 +32,11 @@ bool app_Initialize(App& app)
 
     glfwSetWindowUserPointer(app.window.nativeHandle, &app);
     gui_Initialize(app.window);
+    renderer_Initialize();
 
+    outlineShader = shader_Create("assets/shaders/default/outline.vert", "assets/shaders/default/outline.frag");
+    ubo_BindToShader(app.cameraUBO, outlineShader, "CameraData");
+    
     app.viewportRenderTarget = render_target_Create(app.width, app.height);
 
     return true;
@@ -38,8 +44,6 @@ bool app_Initialize(App& app)
 
 void app_OnStart(App& app)
 {
-    std::cout << "Starting app and loading start Scene" << std::endl;
-
     app_LoadScene(app, app.startScene);
 }
 
@@ -87,7 +91,8 @@ void app_Update(App& app)
         mats.projection = camera_GetProjectionMatrix(cam);
         mats.view = camera_GetViewMatrix(cam);
         ubo_Update(app.cameraUBO, 0, sizeof(CameraMatrices), &mats);
-
+        
+        node_UpdateWorldMatrix(app.activeScene->root, glm::mat4(1.0f));
     }
 
     renderer_RenderViewport(app);
@@ -96,9 +101,7 @@ void app_Update(App& app)
     glViewport(0, 0, app.width, app.height);
     window_Clear(app.window);
 
-    gui_NewFrame(app);
-    gui_RenderViewport(app);
-    gui_Render();
+    gui_Render(app);
 
     window_SwapBuffers(app.window);
     window_Update(app.window);
