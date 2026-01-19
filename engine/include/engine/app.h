@@ -28,6 +28,8 @@ struct ENGINE_API App
     uint32_t sceneChange = -1;
 };
 
+extern float playerHealth;
+
 extern Shader outlineShader;
 
 ENGINE_API App app_Create(uint32_t width, uint32_t height, const std::string& title, const Scene* start);

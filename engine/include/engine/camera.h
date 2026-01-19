@@ -9,6 +9,9 @@ struct CameraMatrices
 {
     glm::mat4 projection;
     glm::mat4 view;
+    float nearPlane;
+    float farPlane;
+    float _padding[2];
 };
 
 struct Camera

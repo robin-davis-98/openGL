@@ -90,9 +90,10 @@ void app_Update(App& app)
         CameraMatrices mats;
         mats.projection = camera_GetProjectionMatrix(cam);
         mats.view = camera_GetViewMatrix(cam);
+        mats.nearPlane = cam.nearPlane;
+        mats.farPlane = cam.farPlane;
+
         ubo_Update(app.cameraUBO, 0, sizeof(CameraMatrices), &mats);
-        
-        node_UpdateWorldMatrix(app.activeScene->root, glm::mat4(1.0f));
     }
 
     renderer_RenderViewport(app);

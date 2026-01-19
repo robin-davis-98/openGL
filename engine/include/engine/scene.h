@@ -53,7 +53,7 @@ ENGINE_API Scene scene_Create();
 
 ENGINE_API Node* scene_AddModel(Scene& scene, Node* parent, Model* model, const std::string& name);
 ENGINE_API Node* scene_AddPointLight(Scene& scene, Node* parent, glm::vec3 colour, float intensity, float radius, const std::string& name = "Point Light");
-ENGINE_API void scene_Render(Scene& scene, RenderTarget& target, Colour& clearColour);
+ENGINE_API void scene_Render(Scene& scene, RenderTarget& target, Colour& clearColour, uint32_t& cameraUBO);
 ENGINE_API void scene_Destroy(Scene& scene);
 void scene_RenderNode(Node* node);
 void scene_RenderSelection(Node* node);

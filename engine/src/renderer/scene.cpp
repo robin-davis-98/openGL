@@ -105,7 +105,7 @@ void scene_RenderSelection(Node* node)
     }
 }
 
-void scene_Render(Scene& scene, RenderTarget& target, Colour& clearColour)
+void scene_Render(Scene& scene, RenderTarget& target, Colour& clearColour, uint32_t& cameraUBO)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, target.fbo);
     glViewport(0, 0, target.width, target.height);
@@ -131,10 +131,24 @@ void scene_Render(Scene& scene, RenderTarget& target, Colour& clearColour)
     {
         node_UpdateWorldMatrix(scene.root, glm::mat4(1.0f));
 
+        renderer_BuildClusters((float)target.width, (float)target.height, cameraUBO);
         renderer_UpdateLights(scene);
+
+        static bool hasChecked = false;
+        if (!hasChecked)
+        {
+            renderer_checkBufferData();
+            hasChecked = true;
+        }
 
         scene_RenderNode(scene.root);
         scene_RenderSelection(scene.root);
+
+        renderer_BeginUI(target.width, target.height);
+
+        ui_DrawHealthBar(glm::vec2(20, 20), glm::vec2(300, 30), playerHealth);
+
+        renderer_EndUI();
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

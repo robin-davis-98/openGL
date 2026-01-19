@@ -21,6 +21,19 @@ void camera_ProcessInput(Camera& cam, App& app, float deltaTime)
         cam.position += speed * cam.up;
     if (glfwGetKey(app.window.nativeHandle, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         cam.position -= speed * cam.up;
+
+
+    float changeSpeed = 0.5f; // Adjust how fast health moves (50% per second)
+
+    if (glfwGetKey(app.window.nativeHandle, GLFW_KEY_EQUAL) == GLFW_PRESS) // The + key
+    {
+        playerHealth = glm::clamp(playerHealth + (changeSpeed * deltaTime), 0.0f, 1.0f);
+    }
+
+    if (glfwGetKey(app.window.nativeHandle, GLFW_KEY_MINUS) == GLFW_PRESS) // The - key
+    {
+        playerHealth = glm::clamp(playerHealth - (changeSpeed * deltaTime), 0.0f, 1.0f);
+    }
 }
 
 void camera_ProcessMouse(Camera& cam, float xpos, float ypos)
