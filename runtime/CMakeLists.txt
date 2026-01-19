@@ -1,8 +1,14 @@
 project(modelViewer)
 
-add_executable(${PROJECT_NAME} 
+add_executable(${PROJECT_NAME}  WIN32
     main.cpp
 )
+
+if(MSVC OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set_target_properties(${PROJECT_NAME} PROPERTIES 
+    LINK_FLAGS "-Xlinker /SUBSYSTEM:WINDOWS -Xlinker /ENTRY:mainCRTStartup"
+)
+endif()
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE

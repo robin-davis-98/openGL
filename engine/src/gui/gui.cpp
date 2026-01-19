@@ -138,7 +138,33 @@ void gui_RenderHierarchy(App& app)
 void gui_RenderRuntime(App& app)
 {
     ImGui::Begin("Runtime Statistics");
-    ImGui::Text("Runtime");
+   ImGuiIO& io = ImGui::GetIO();
+
+    // Display FPS
+    ImGui::Text("Frames Per Second: %.1f FPS", io.Framerate);
+    
+    // Display Frame Time (ms)
+    // 1000.0f / io.Framerate gives the average ms per frame
+    ImGui::Text("Frame Time: %.3f ms", 1000.0f / io.Framerate);
+
+    ImGui::Separator();
+
+    // Visual Sparkline (Optional but cool for a debug UI)
+    static float values[90] = { 0 };
+    static int values_offset = 0;
+    static double refresh_time = 0.0;
+    
+    if (refresh_time == 0.0) refresh_time = ImGui::GetTime();
+    
+    // Update the graph every 1/60th of a second
+    while (refresh_time < ImGui::GetTime()) {
+        values[values_offset] = 1000.0f / io.Framerate;
+        values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
+        refresh_time += 1.0f / 60.0f;
+    }
+
+    float max_ms = 33.33f; // Scale graph to 30fps baseline
+    ImGui::PlotLines("ms/frame", values, IM_ARRAYSIZE(values), values_offset, nullptr, 0.0f, max_ms, ImVec2(0, 80));
     ImGui::End();
 }
 
